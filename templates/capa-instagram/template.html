@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Inter:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1080px;
+    height: 1350px;
+    overflow: hidden;
+    background: #0a0a0a;
+    position: relative;
+    font-family: 'Oswald', Impact, sans-serif;
+  }
+
+  /* Background image */
+  .bg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: url('https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1080&q=80') center/cover no-repeat;
+    filter: brightness(0.3) contrast(1.2);
+    z-index: 0;
+  }
+
+  /* Dark overlay gradient */
+  .overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.3) 0%,
+      rgba(0,0,0,0.1) 30%,
+      rgba(0,0,0,0.1) 50%,
+      rgba(0,0,0,0.7) 80%,
+      rgba(0,0,0,0.95) 100%
+    );
+    z-index: 1;
+  }
+
+  /* Content */
+  .content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    padding-bottom: 100px;
+  }
+
+  /* Handle top */
+  .handle-top {
+    position: absolute;
+    top: 40px;
+    right: 40px;
+    font-family: 'Inter', sans-serif;
+    font-size: 22px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 0.5px;
+  }
+
+  /* Page indicator */
+  .page-indicator {
+    position: absolute;
+    top: 40px;
+    left: 40px;
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.5);
+  }
+
+  /* Main title block */
+  .title-block {
+    text-align: center;
+    padding: 0 60px;
+    max-width: 960px;
+  }
+
+  .title-line {
+    font-size: 88px;
+    font-weight: 700;
+    color: #ffffff;
+    text-transform: uppercase;
+    line-height: 1.12;
+    letter-spacing: -2px;
+    margin: 0;
+  }
+
+  .title-line.accent {
+    color: #FF6B2B;
+  }
+
+  /* Separator */
+  .separator {
+    width: 60px;
+    height: 4px;
+    background: #FF6B2B;
+    margin: 30px auto;
+  }
+
+  /* Subtitle */
+  .subtitle {
+    font-family: 'Inter', sans-serif;
+    font-size: 26px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.75);
+    line-height: 1.4;
+    margin-top: 0;
+    letter-spacing: 0.3px;
+  }
+
+  .subtitle .arrow {
+    color: #FF6B2B;
+    margin-right: 8px;
+  }
+
+  /* Handle bottom */
+  .handle-bottom {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 20px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.8);
+  }
+
+  .handle-bottom .verified {
+    width: 20px;
+    height: 20px;
+    background: #1DA1F2;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .handle-bottom .verified svg {
+    width: 12px;
+    height: 12px;
+    fill: white;
+  }
+</style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="overlay"></div>
+
+  <div class="handle-top">@trios.work</div>
+  <div class="page-indicator">1/10</div>
+
+  <div class="content">
+    <div class="title-block">
+      <p class="title-line">IA DESCOBRIU</p>
+      <p class="title-line">VULNERABILIDADE</p>
+      <p class="title-line accent">CRÍTICA E CORRIGIU</p>
+      <p class="title-line accent">EM HORAS</p>
+
+      <div class="separator"></div>
+
+      <p class="subtitle">
+        <span class="arrow">→</span>
+        O cenário de segurança mudou. E se a sua empresa não está acompanhando, está ficando para trás.
+      </p>
+    </div>
+  </div>
+
+  <div class="handle-bottom">
+    @trios.work
+    <div class="verified">
+      <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+    </div>
+  </div>
+</body>
+</html>
