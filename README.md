@@ -7,7 +7,8 @@ Template instalável para OpenClaw Agent. Instale um agente IA operacional em mi
 ```bash
 # 1. Subir VPS (Ubuntu/Debian)
 # 2. Rodar:
-bash setup.sh
+git clone https://github.com/trioswork/trios-agent-template.git /root/.openclaw/workspace
+bash /root/.openclaw/workspace/setup.sh
 # 3. Conectar Telegram:
 openclaw configure
 # 4. Iniciar:
