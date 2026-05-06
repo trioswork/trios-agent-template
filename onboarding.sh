@@ -207,22 +207,6 @@ fi
 # MEMORY.md — zerado (sem dados de empresa anterior)
 echo -e "  ${GREEN}Memória zerada (sem dados de empresa anterior)${NC}"
 
-# Criar estrutura de diretórios de memória
-echo -e "  ${CYAN}Criando estrutura de memória...${NC}"
-mkdir -p "$WORKSPACE/memory/context"
-mkdir -p "$WORKSPACE/memory/projects"
-mkdir -p "$WORKSPACE/memory/sessions"
-mkdir -p "$WORKSPACE/memory/integrations"
-mkdir -p "$WORKSPACE/memory/feedback"
-mkdir -p "$WORKSPACE/backups"
-
-# Criar arquivos iniciais vaziosecho "# Decisões Permanentes" > "$WORKSPACE/memory/context/decisions.md"echo "" > "$WORKSPACE/memory/context/lessons.md"echo "# Pessoas e Contatos" > "$WORKSPACE/memory/context/people.md"echo "# Contexto do Negócio" > "$WORKSPACE/memory/context/business-context.md"echo "# Tarefas Pendentes" > "$WORKSPACE/memory/pending.md"echo "[]" > "$WORKSPACE/memory/heartbeat-state.json"
-echo -e "  ${GREEN}Estrutura de memória criada${NC}"
-
-# Configurar crons
-echo -e "  ${CYAN}Configurando crons...${NC}"
-bash "$WORKSPACE/scripts/setup-crons.sh" 2>/dev/null || true
-
 # Criar .env
 cat > "$WORKSPACE/.env" << EOF
 # Credenciais — $BUSINESS_NAME

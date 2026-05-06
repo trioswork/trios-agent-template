@@ -1,0 +1,19 @@
+{
+  "name": "trios-workspace",
+  "version": "1.0.0",
+  "description": "Workspace do Trios — OpenClaw AI Agent",
+  "private": true,
+  "scripts": {
+    "install-deps": "pip3 install psycopg2-binary",
+    "sync-memory": "python3 scripts/memory-sync.py --agent-id main",
+    "generate-embeddings": "python3 scripts/generate-embeddings.py",
+    "backup": "bash scripts/backup-to-github.sh",
+    "restore": "bash install.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aronenascimento/trios-workspace.git"
+  },
+  "author": "Arone <arone@trios.work>",
+  "license": "private"
+}

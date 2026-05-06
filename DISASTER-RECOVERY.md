@@ -1,4 +1,4 @@
-# Disaster Recovery
+# Disaster Recovery — Trios Workspace
 
 ## O que tá no GitHub (recuperável)
 - SOUL.md, USER.md, AGENTS.md, IDENTITY.md, HEARTBEAT.md, TOOLS.md, MEMORY.md
@@ -49,7 +49,7 @@ sudo -u postgres psql -d trios_memory -c "GRANT ALL ON SCHEMA public TO trios;"
 ### 4. Clonar workspace do GitHub
 ```bash
 cd /root/.openclaw
-git clone https://github.com/trioswork/trios-agent-template.git workspace
+git clone https://github.com/aronenascimento/trios-workspace.git workspace
 cd workspace
 
 # Instalar dependências Python

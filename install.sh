@@ -1,11 +1,11 @@
 #!/bin/bash
 # ============================================================
-# Agent Workspace — Instalador
+# Trios Workspace — Instalador
 # Uso: bash install.sh
 # ============================================================
 set -e
 
-echo "🤘 Agent Workspace — Instalador"
+echo "🤘 Trios Workspace — Instalador"
 echo "================================"
 echo ""
 
