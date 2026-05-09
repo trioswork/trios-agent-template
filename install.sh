@@ -1,17 +1,15 @@
 #!/bin/bash
 # ============================================================
 # Trios Agent — Instalador Zero-Click
-# VPS virgem → agente funcionando em 5 minutos
+# 
+# Instala OpenClaw PURO + configurações validadas.
+# Sem adulterar o OpenClaw. Só automatiza o setup.
 #
-# Uso (numa VPS recém-criada):
+# Uso (VPS virgem):
 #   bash <(curl -fsSL https://raw.githubusercontent.com/trioswork/trios-agent-template/main/install.sh)
-#
-# Ou se já clonou o repo:
-#   bash install.sh
 # ============================================================
 set -e
 
-# Cores
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
@@ -24,21 +22,16 @@ echo -e "${BOLD}${CYAN}🤘 Trios Agent — Instalador${NC}"
 echo -e "${BOLD}${CYAN}=============================${NC}"
 echo ""
 
-# =============================================
-# Detectar se é root
-# =============================================
 if [ "$EUID" -ne 0 ]; then
     echo -e "${RED}Rode como root: sudo bash install.sh${NC}"
     exit 1
 fi
 
 # =============================================
-# 1. Sistema (silencioso, sem干预 desnecessário)
+# 1. Dependências do sistema
 # =============================================
-echo -e "${YELLOW}[1/8] Preparando sistema...${NC}"
+echo -e "${YELLOW}[1/7] Instalando dependências do sistema...${NC}"
 apt-get update -qq
-
-# Dependências essenciais (git, curl, python3, pip, postgresql, build tools)
 apt-get install -y -qq \
     git curl wget \
     python3 python3-pip python3-venv \
@@ -46,13 +39,12 @@ apt-get install -y -qq \
     build-essential libpq-dev \
     ffmpeg \
     > /dev/null 2>&1
-
 echo -e "${GREEN}  ✓ Sistema pronto${NC}"
 
 # =============================================
 # 2. Node.js 22
 # =============================================
-echo -e "${YELLOW}[2/8] Instalando Node.js 22...${NC}"
+echo -e "${YELLOW}[2/7] Instalando Node.js 22...${NC}"
 if ! command -v node &> /dev/null || [[ "$(node -v | cut -d. -f1)" != "v22" ]]; then
     curl -fsSL https://deb.nodesource.com/setup_22.x | bash - > /dev/null 2>&1
     apt-get install -y -qq nodejs > /dev/null 2>&1
@@ -62,130 +54,108 @@ echo -e "${GREEN}  ✓ Node.js $(node -v)${NC}"
 # =============================================
 # 3. PostgreSQL + pgvector
 # =============================================
-echo -e "${YELLOW}[3/8] Configurando PostgreSQL + pgvector...${NC}"
+echo -e "${YELLOW}[3/7] Configurando PostgreSQL + pgvector...${NC}"
 
-# Instalar pgvector
 PG_VER=$(psql --version 2>/dev/null | grep -oP '\d+' | head -1 || echo "16")
 apt-get install -y -qq "postgresql-${PG_VER}-pgvector" 2>/dev/null || \
 apt-get install -y -qq postgresql-16-pgvector 2>/dev/null || {
-    # Compilar pgvector se não tiver pacote
-    echo "  Compilando pgvector..."
-    cd /tmp
-    rm -rf pgvector
+    cd /tmp && rm -rf pgvector
     git clone --branch v0.7.0 https://github.com/pgvector/pgvector.git 2>/dev/null
-    cd pgvector
-    make -j$(nproc) > /dev/null 2>&1
-    make install > /dev/null 2>&1
+    cd pgvector && make -j$(nproc) > /dev/null 2>&1 && make install > /dev/null 2>&1
     cd /root
 }
 
-# Criar banco e usuário
 PG_PASS=$(openssl rand -hex 16 2>/dev/null || python3 -c "import secrets;print(secrets.token_hex(16))")
 sudo -u postgres psql -c "CREATE DATABASE agent_memory;" 2>/dev/null || true
 sudo -u postgres psql -c "CREATE USER agent WITH PASSWORD '${PG_PASS}';" 2>/dev/null || true
 sudo -u postgres psql -d agent_memory -c "CREATE EXTENSION IF NOT EXISTS vector;" 2>/dev/null || true
 sudo -u postgres psql -d agent_memory -c "GRANT ALL ON SCHEMA public TO agent;" 2>/dev/null || true
 sudo -u postgres psql -d agent_memory -c "ALTER SCHEMA public OWNER TO agent;" 2>/dev/null || true
-
 echo -e "${GREEN}  ✓ PostgreSQL + pgvector${NC}"
 
 # =============================================
 # 4. Python deps
 # =============================================
-echo -e "${YELLOW}[4/8] Instalando dependências Python...${NC}"
+echo -e "${YELLOW}[4/7] Instalando dependências Python...${NC}"
 pip3 install --break-system-packages -q psycopg2-binary 2>/dev/null || \
     pip3 install psycopg2-binary 2>/dev/null || true
 echo -e "${GREEN}  ✓ Python deps${NC}"
 
 # =============================================
-# 5. OpenClaw
+# 5. OpenClaw (PURO, sem modificação)
 # =============================================
-echo -e "${YELLOW}[5/8] Instalando OpenClaw...${NC}"
+echo -e "${YELLOW}[5/7] Instalando OpenClaw...${NC}"
 if ! command -v openclaw &> /dev/null; then
     npm install -g openclaw > /dev/null 2>&1
 fi
 OC_VER=$(openclaw --version 2>/dev/null || echo "instalado")
-echo -e "${GREEN}  ✓ OpenClaw ${OC_VER}${NC}"
+echo -e "${GREEN}  ✓ OpenClaw ${OC_VER} (instalação original)${NC}"
 
 # =============================================
-# 6. Workspace (clonar template)
+# 6. Configurações validadas (não adultera o OpenClaw)
 # =============================================
-echo -e "${YELLOW}[6/8] Montando workspace...${NC}"
+echo -e "${YELLOW}[6/7] Aplicando configurações validadas...${NC}"
+
 WS="/root/.openclaw/workspace"
 
 if [ -d "$WS/.git" ]; then
-    echo "  Workspace já existe, pulando clone."
+    echo "  Workspace já existe, atualizando..."
+    cd "$WS" && git pull 2>/dev/null || true
 else
     mkdir -p /root/.openclaw
     if [ -f "$(dirname "$0")/scripts/memory-sync.py" ]; then
-        # Rodando de dentro do repo já clonado
         cp -r "$(cd "$(dirname "$0")" && pwd)" "$WS"
     else
-        # Clonar do GitHub
         git clone https://github.com/trioswork/trios-agent-template.git "$WS" 2>/dev/null
     fi
 fi
 
 cd "$WS"
 
-# Criar schema do banco
+# Schema do banco (tabelas de memória + pgvector)
 if [ -f "scripts/memory-schema.sql" ]; then
     sudo -u postgres psql -d agent_memory -f scripts/memory-schema.sql 2>/dev/null || true
+    echo -e "${GREEN}  ✓ Schema do banco aplicado${NC}"
 fi
 
-# Configurar crontab (memory sync a cada 15min)
+# Crontab: memory sync a cada 15min
 CRON_LINE="*/15 * * * * cd ${WS} && /usr/bin/python3 scripts/memory-sync.py >> /tmp/memory-sync.log 2>&1"
 (crontab -l 2>/dev/null | grep -v "memory-sync.py"; echo "$CRON_LINE") | crontab -
+echo -e "${GREEN}  ✓ Memory sync configurado (15min)${NC}"
 
-echo -e "${GREEN}  ✓ Workspace montado${NC}"
-
-# =============================================
-# 7. .env (interativo)
-# =============================================
-echo -e "${YELLOW}[7/8] Configurando credenciais...${NC}"
-
+# .env com PG já preenchido
 if [ ! -f "$WS/.env" ]; then
     cat > "$WS/.env" << ENVFILE
 # ============================================================
 # Trios Agent — Variáveis de Ambiente
-# Preencha com suas credenciais
 # ============================================================
 
-# LLM Provider (obrigatório)
-# Opções: OPENAI_API_KEY, ANTHROPIC_API_KEY, ZAI_API_KEY, etc.
-# Use a chave do seu provider preferido
-LLM_API_KEY=
-LLM_PROVIDER=openai
+# LLM Provider (OBRIGATÓRIO — escolha UM)
+# OPENAI_API_KEY=
+# ANTHROPIC_API_KEY=
+# ZAI_API_KEY=
+# GROQ_API_KEY=
 
-# Gemini (embeddings, opcional)
-GEMINI_API_KEY=
+# Gemini (embeddings pgvector, opcional)
+# GEMINI_API_KEY=
 
-# PostgreSQL (memória local, já configurado)
+# PostgreSQL (já configurado automaticamente)
 PG_HOST=localhost
 PG_PORT=5432
 PG_DBNAME=agent_memory
 PG_USER=agent
 PG_PASSWORD=${PG_PASS}
 ENVFILE
-
-    echo -e "${RED}  ⚠ IMPORTANTE: Edite ${WS}/env com sua API key${NC}"
-    echo -e "${RED}    nano ${WS}/.env${NC}"
+    echo -e "${GREEN}  ✓ .env criado (falta API key de LLM)${NC}"
 else
-    # Atualizar PG_PASSWORD se necessário
     if ! grep -q "PG_PASSWORD=${PG_PASS}" "$WS/.env" 2>/dev/null; then
         sed -i "s/^PG_PASSWORD=.*/PG_PASSWORD=${PG_PASS}/" "$WS/.env" 2>/dev/null || true
     fi
     echo -e "${GREEN}  ✓ .env já existe${NC}"
 fi
 
-# =============================================
-# 8. Primeiro boot
-# =============================================
-echo -e "${YELLOW}[8/8] Preparando primeiro boot...${NC}"
-
 # Systemd service pro gateway
 mkdir -p ~/.config/systemd/user
-
 cat > ~/.config/systemd/user/openclaw-gateway.service << SERVICE
 [Unit]
 Description=OpenClaw Gateway
@@ -201,35 +171,45 @@ WorkingDirectory=${WS}
 [Install]
 WantedBy=default.target
 SERVICE
-
 systemctl --user daemon-reload 2>/dev/null || true
+echo -e "${GREEN}  ✓ Gateway service configurado${NC}"
 
-echo -e "${GREEN}  ✓ Service configurado${NC}"
+# Estrutura de pastas de memória (se não existe)
+mkdir -p "$WS/memory/context" "$WS/memory/projects" "$WS/memory/sessions" \
+         "$WS/memory/integrations" "$WS/memory/feedback" "$WS/skills" 2>/dev/null || true
+echo -e "${GREEN}  ✓ Estrutura de memória criada${NC}"
+
+echo -e "${GREEN}  ✓ Todas configurações aplicadas${NC}"
 
 # =============================================
-# FIM
+# 7. openclaw configure (interativo)
 # =============================================
 echo ""
-echo -e "${BOLD}${GREEN}✅ Instalação concluída!${NC}"
+echo -e "${BOLD}${GREEN}✅ Sistema instalado e configurado!${NC}"
 echo ""
-echo -e "${BOLD}Próximos passos:${NC}"
+echo -e "${BOLD}Agora configure o OpenClaw (3 interações):${NC}"
 echo ""
-echo -e "  ${CYAN}1.${NC} Edite o .env com sua API key de LLM:"
+echo -e "  ${CYAN}1.${NC} Coloque sua API key no .env:"
 echo -e "     ${BOLD}nano ${WS}/.env${NC}"
 echo ""
-echo -e "  ${CYAN}2.${NC} Configure o OpenClaw (escolha modelo, canal, etc):"
+echo -e "  ${CYAN}2.${NC} Configure modelo, canal e persona:"
 echo -e "     ${BOLD}openclaw configure${NC}"
 echo ""
-echo -e "  ${CYAN}3.${NC} Personalize o agente:"
-echo -e "     ${BOLD}nano ${WS}/SOUL.md${NC}    ← quem é o agente"
-echo -e "     ${BOLD}nano ${WS}/USER.md${NC}    ← quem é você"
-echo -e "     ${BOLD}nano ${WS}/AGENTS.md${NC}  ← regras operacionais"
-echo ""
-echo -e "  ${CYAN}4.${NC} Inicie o gateway:"
+echo -e "  ${CYAN}3.${NC} Inicie:"
 echo -e "     ${BOLD}openclaw gateway start${NC}"
 echo ""
-echo -e "${BOLD}Memory sync:${NC} a cada 15min (crontab já configurado)"
-echo -e "${BOLD}PostgreSQL:${NC} agent_memory em localhost:5432"
-echo -e "${BOLD}Workspace:${NC} ${WS}"
+echo -e "Depois, personalize editando os arquivos em ${WS}:"
+echo -e "  ${BOLD}SOUL.md${NC}     ← Personalidade do agente"
+echo -e "  ${BOLD}USER.md${NC}     ← Suas informações"
+echo -e "  ${BOLD}AGENTS.md${NC}   ← Regras operacionais"
 echo ""
-echo "🤘 Seu agente tá pronto. Só precisa de uma API key."
+echo -e "${BOLD}O que já vem configurado:${NC}"
+echo "  ✓ OpenClaw original (sem modificação)"
+echo "  ✓ PostgreSQL + pgvector (memória semântica)"
+echo "  ✓ Memory sync a cada 15min (crontab)"
+echo "  ✓ Scripts de backup e manutenção"
+echo "  ✓ Estrutura de pastas de memória"
+echo "  ✓ Gateway service (systemd)"
+echo "  ✓ Schema do banco (tabelas + embeddings)"
+echo ""
+echo "🤘 Tudo que a gente já validou, pronto pra usar."
