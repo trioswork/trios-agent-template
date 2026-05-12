@@ -154,25 +154,9 @@ else
     echo -e "${GREEN}  ✓ .env já existe${NC}"
 fi
 
-# Systemd service pro gateway
-mkdir -p ~/.config/systemd/user
-cat > ~/.config/systemd/user/openclaw-gateway.service << SERVICE
-[Unit]
-Description=OpenClaw Gateway
-After=network.target postgresql.service
-
-[Service]
-Type=simple
-ExecStart=/usr/bin/openclaw gateway start
-Restart=on-failure
-RestartSec=5
-WorkingDirectory=${WS}
-
-[Install]
-WantedBy=default.target
-SERVICE
-systemctl --user daemon-reload 2>/dev/null || true
-echo -e "${GREEN}  ✓ Gateway service configurado${NC}"
+# Gateway service via openclaw (forma oficial)
+openclaw gateway install 2>/dev/null || true
+echo -e "${GREEN}  ✓ Gateway service instalado${NC}"
 
 # Estrutura de pastas de memória (se não existe)
 mkdir -p "$WS/memory/context" "$WS/memory/projects" "$WS/memory/sessions" \
@@ -196,7 +180,7 @@ echo -e "  ${CYAN}2.${NC} Configure modelo, canal e persona:"
 echo -e "     ${BOLD}openclaw configure${NC}"
 echo ""
 echo -e "  ${CYAN}3.${NC} Inicie:"
-echo -e "     ${BOLD}openclaw gateway start${NC}"
+echo -e "     ${BOLD}openclaw gateway restart${NC}"
 echo ""
 echo -e "Depois, personalize editando os arquivos em ${WS}:"
 echo -e "  ${BOLD}SOUL.md${NC}     ← Personalidade do agente"
