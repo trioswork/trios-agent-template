@@ -6,7 +6,7 @@
 # Sem adulterar o OpenClaw. Só automatiza o setup.
 #
 # Uso (VPS virgem):
-#   bash <(curl -fsSL https://raw.githubusercontent.com/trioswork/trios-agent-template/main/install.sh)
+#   bash <(curl -fsSL https://raw.githubusercontent.com/trioswork/trios-agent-template/master/install.sh)
 # ============================================================
 set -e
 
