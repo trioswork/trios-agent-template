@@ -15,5 +15,8 @@
     "url": "https://github.com/trioswork/trios-workspace.git"
   },
   "author": "Arone <arone@trios.work>",
-  "license": "private"
+  "license": "private",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.105.4"
+  }
 }
