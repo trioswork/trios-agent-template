@@ -30,14 +30,6 @@ logging.basicConfig(
 )
 log = logging.getLogger('pre-compaction')
 
-DB_CONFIG = {
-    'host': os.getenv('PG_HOST', 'localhost'),
-    'port': int(os.getenv('PG_PORT', '5432')),
-    'dbname': os.getenv('PG_DBNAME', 'trios_memory'),
-    'user': os.getenv('PG_USER', 'trios'),
-    'password': os.environ['PG_PASSWORD'],
-}
-
 # Carrega .env se existir
 def load_dotenv():
     env_file = Path(__file__).parent.parent / '.env'
@@ -49,9 +41,18 @@ def load_dotenv():
                 os.environ.setdefault(key.strip(), value.strip())
 
 load_dotenv()
+
+DB_CONFIG = {
+    'host': os.getenv('PG_HOST', 'localhost'),
+    'port': int(os.getenv('PG_PORT', '5432')),
+    'dbname': os.getenv('PG_DBNAME', 'trios_memory'),
+    'user': os.getenv('PG_USER', 'trios'),
+    'password': os.environ.get('PG_PASSWORD', ''),
+}
+
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
-EMBEDDING_MODEL = 'gemini-embedding-001'
-EMBEDDING_DIM = 768
+EMBEDDING_MODEL = 'gemini-embedding-2'
+EMBEDDING_DIM = 1536
 
 # ============================================================
 # Padrões de detecção
@@ -242,7 +243,11 @@ def extract_and_save(conversation: str, agent_id: str = 'main', session_id: str 
             embedding = generate_embedding(f"{seg['title']}\n\n{seg['content']}")
             embedding_str = None
             if embedding:
-                embedding_str = f"[{','.join(str(f) for f in embedding)}]"
+                if len(embedding) != EMBEDDING_DIM:
+                    log.warning(f"Embedding ignorado: dimensão {len(embedding)} != {EMBEDDING_DIM}")
+                    embedding = None
+                else:
+                    embedding_str = f"[{','.join(str(f) for f in embedding)}]"
 
             # Salva
             cur.execute("""

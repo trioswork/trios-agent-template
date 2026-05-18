@@ -55,7 +55,9 @@ DB_CONFIG = {
 }
 
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
-EMBEDDING_MODEL = 'gemini-embedding-2'
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
+EMBEDDING_PROVIDER = os.getenv('MEMORY_EMBEDDING_PROVIDER', 'openai' if OPENAI_API_KEY else 'gemini').lower()
+EMBEDDING_MODEL = os.getenv('MEMORY_EMBEDDING_MODEL', 'text-embedding-3-small' if EMBEDDING_PROVIDER == 'openai' else 'gemini-embedding-2')
 EMBEDDING_DIM = 1536
 
 WORKSPACE = Path(os.getenv('WORKSPACE', '/root/.openclaw/workspace'))
@@ -277,42 +279,54 @@ def extract_sections(filepath: Path) -> list[dict]:
 
 
 def generate_embedding(text: str) -> list[float] | None:
-    """Gera embedding via Gemini API."""
-    if not GEMINI_API_KEY:
-        log.warning("GEMINI_API_KEY não configurada. Pulando embedding.")
-        return None
-
+    """Gera embedding via OpenAI (preferencial) ou Gemini, sempre com 1536 dimensões."""
     try:
         import urllib.request
         import urllib.error
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{EMBEDDING_MODEL}:embedContent?key={GEMINI_API_KEY}"
-
-        # Limita texto para ~8000 tokens (~32000 chars)
         truncated = text[:32000]
 
+        if EMBEDDING_PROVIDER == 'openai':
+            if not OPENAI_API_KEY:
+                log.warning("OPENAI_API_KEY não configurada. Pulando embedding.")
+                return None
+            payload = json.dumps({
+                "model": EMBEDDING_MODEL,
+                "input": truncated,
+                "dimensions": EMBEDDING_DIM,
+            }).encode('utf-8')
+            req = urllib.request.Request(
+                "https://api.openai.com/v1/embeddings",
+                data=payload,
+                headers={
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {OPENAI_API_KEY}',
+                },
+                method='POST'
+            )
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                data = json.loads(resp.read())
+                return data.get('data', [{}])[0].get('embedding')
+
+        if not GEMINI_API_KEY:
+            log.warning("GEMINI_API_KEY não configurada. Pulando embedding.")
+            return None
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{EMBEDDING_MODEL}:embedContent?key={GEMINI_API_KEY}"
         payload = json.dumps({
             "model": f"models/{EMBEDDING_MODEL}",
             "content": {"parts": [{"text": truncated}]},
             "outputDimensionality": EMBEDDING_DIM,
         }).encode('utf-8')
-
-        req = urllib.request.Request(
-            url,
-            data=payload,
-            headers={'Content-Type': 'application/json'},
-            method='POST'
-        )
-
+        req = urllib.request.Request(url, data=payload, headers={'Content-Type': 'application/json'}, method='POST')
         with urllib.request.urlopen(req, timeout=30) as resp:
             data = json.loads(resp.read())
             return data.get('embedding', {}).get('values')
 
     except urllib.error.HTTPError as e:
-        log.error(f"Gemini API HTTP {e.code}: {e.read().decode()[:200]}")
+        log.error(f"{EMBEDDING_PROVIDER} embedding HTTP {e.code}: {e.read().decode()[:200]}")
         return None
     except Exception as e:
-        log.error(f"Erro gerando embedding: {e}")
+        log.error(f"Erro gerando embedding ({EMBEDDING_PROVIDER}): {e}")
         return None
 
 

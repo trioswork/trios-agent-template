@@ -171,11 +171,11 @@ def generate_embedding(text):
     api_key = os.environ.get('GEMINI_API_KEY')
     if not api_key:
         return None
-    url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key={api_key}'
+    url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-2:embedContent?key={api_key}'
     payload = json.dumps({
-        'model': 'models/gemini-embedding-001',
+        'model': 'models/gemini-embedding-2',
         'content': {'parts': [{'text': text[:2000]}]},  # Limita a 2000 chars
-        'outputDimensionality': 1536  # Compatível com pgvector (gemini-embedding-2)
+        'outputDimensionality': 1536  # Compatível com pgvector vector(1536)
     }).encode('utf-8')
     
     try:

@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS memory_entries (
         'permanent', 'tactical_30d', 'session_only'
     )),
     expires_at      TIMESTAMPTZ,
-    embedding       VECTOR(768),
+    embedding       VECTOR(1536),
     content_hash    VARCHAR(64),
     version         INTEGER NOT NULL DEFAULT 1,
     is_current      BOOLEAN NOT NULL DEFAULT TRUE,
@@ -136,7 +136,7 @@ CREATE INDEX IF NOT EXISTS idx_feedback_tags ON memory_feedback USING GIN(tags);
 
 -- Busca semântica via pgvector
 CREATE OR REPLACE FUNCTION search_memories(
-    query_embedding VECTOR(768),
+    query_embedding VECTOR(1536),
     match_count INTEGER DEFAULT 10,
     filter_kind TEXT DEFAULT NULL,
     filter_domain TEXT DEFAULT NULL,
